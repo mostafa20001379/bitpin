@@ -4,3 +4,4 @@ drf-nested-routers
 redis
 django-redis
 psycopg2-binary
+python-dotenv
