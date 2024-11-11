@@ -8,6 +8,7 @@ from .serializers import ContentListSerializer, RatingSerializer
 
 
 class ContentViewSet(viewsets.ModelViewSet):
+    """ API endpoint that allows content to be viewed or edited. """
     queryset = Content.objects.all()
     serializer_class = ContentListSerializer
 
@@ -19,6 +20,7 @@ class ContentViewSet(viewsets.ModelViewSet):
 
 
 class RatingViewSet(viewsets.ModelViewSet):
+    """ API endpoint that allows ratings to be viewed or edited. """
     serializer_class = RatingSerializer
 
     def create(self, request, *args, **kwargs):
