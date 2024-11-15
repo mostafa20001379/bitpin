@@ -2,6 +2,7 @@ from rest_framework import viewsets, status
 from rest_framework.response import Response
 from django.db import transaction
 from django.core.cache import cache
+from datetime import datetime, timedelta
 
 from .models import Content, Rating
 from .serializers import ContentListSerializer, RatingSerializer
@@ -20,7 +21,7 @@ class ContentViewSet(viewsets.ModelViewSet):
 
 
 class RatingViewSet(viewsets.ModelViewSet):
-    """ API endpoint that allows ratings to be viewed or edited. """
+    """API endpoint that allows ratings to be viewed or edited."""
     serializer_class = RatingSerializer
 
     def create(self, request, *args, **kwargs):
@@ -39,24 +40,47 @@ class RatingViewSet(viewsets.ModelViewSet):
                 rating.score = score
                 rating.save()
 
-            # Spam protection logic
+            # Advanced spam detection logic
             self._process_rating_verification(rating)
 
         return Response(status=status.HTTP_201_CREATED)
 
     def _process_rating_verification(self, rating):
-        # Get recent ratings count for this content
-        recent_ratings_key = f'recent_ratings_{rating.content.id}'
-        recent_ratings_count = cache.get(recent_ratings_key, 0)
+        content = rating.content
 
-        # If sudden spike in ratings, mark as unverified
-        if recent_ratings_count > 100:  # Threshold for 5 minutes
+        # Get recent ratings for this content
+        recent_ratings = Rating.objects.filter(
+            content=content,
+            created_at__gte=datetime.now() - timedelta(minutes=5)
+        )
+        recent_ratings_count = recent_ratings.count()
+
+        # Detect rating patterns
+        low_ratings_count = recent_ratings.filter(score__lte=1).count()
+        high_ratings_count = recent_ratings.filter(score__gte=4).count()
+
+        # Define thresholds for spam detection
+        spike_threshold = 100  # Sudden spike in ratings
+        low_rating_ratio_threshold = 0.6  # >60% low ratings in a short period
+        high_rating_ratio_threshold = 0.6  # >60% high ratings in a short period
+
+        # Mark as unverified if suspicious patterns are detected
+        if (
+            recent_ratings_count > spike_threshold or
+            (low_ratings_count / recent_ratings_count) > low_rating_ratio_threshold or
+            (high_ratings_count / recent_ratings_count) > high_rating_ratio_threshold
+        ):
             rating.is_verified = False
         else:
             rating.is_verified = True
 
+        # Save the rating verification status
         rating.save()
 
-        # Increment recent ratings counter
+        # Increment the recent ratings counter in the cache
+        recent_ratings_key = f'recent_ratings_{content.id}'
+        if not cache.get(recent_ratings_key):
+            cache.set(recent_ratings_key, 0)
         cache.incr(recent_ratings_key, 1)
-        cache.expire(recent_ratings_key, 300)  # 5 minutes expiry
+        cache.expire(recent_ratings_key, 300)  # Cache expiry: 5 minutes
+

@@ -17,6 +17,7 @@ RUN apt-get update && apt-get install -y \
 
 # Install Python dependencies
 COPY requirements.txt .
+COPY bitpin_project/.env.example bitpin_project/.env
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy project

@@ -16,7 +16,12 @@ echo "Redis started"
 
 # Apply database migrations
 echo "Applying database migrations..."
+python manage.py makemigrations
 python manage.py migrate
+
+# Seed the database
+echo "Applying database seeds..."
+python manage.py seed
 
 # Collect static files
 echo "Collecting static files..."
