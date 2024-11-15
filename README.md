@@ -26,5 +26,5 @@ A high-performance Django REST Framework application for managing content rating
 ### Installation
 1. Clone the repository
 ```bash
-git clone https://github.com/YOUR_USERNAME/bitpin-rating-system.git
-cd bitpin-rating-system
+git clone https://github.com/mostafa20001379/bitpin.git
+cd bitpin

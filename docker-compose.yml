@@ -33,16 +33,6 @@ services:
     volumes:
       - redis_data:/data
 
-#  k6:
-#    image: grafana/k6:latest
-#    command: run /tests/load_test.js
-#    volumes:
-#      - ./tests:/tests
-#    depends_on:
-#      - web
-#    networks:
-#      - default
-
 volumes:
   postgres_data:
   redis_data:
